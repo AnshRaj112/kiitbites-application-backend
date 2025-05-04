@@ -33,5 +33,8 @@ exports.incrementSearchCount = (foodName) => {
   }
 
   // Save updated search counts to data.json
-  fs.writeFileSync(foodDataPath, JSON.stringify(foods, null, 2));
+  fs.writeFile(foodDataPath, JSON.stringify(foods, null, 2))
+    .catch((err) => {
+      console.error("Error writing to file:", err);
+    });
 };
