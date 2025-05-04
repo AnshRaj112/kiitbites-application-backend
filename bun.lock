@@ -4,6 +4,7 @@
     "": {
       "name": "kiitbites-application-backend",
       "dependencies": {
+        "kiitbites-application-backend": ".",
         "bcryptjs": "^3.0.2",
         "bullmq": "^5.52.1",
         "cloudinary": "^2.6.0",
@@ -206,6 +207,8 @@
     "jws": ["jws@4.0.0", "", { "dependencies": { "jwa": "^2.0.0", "safe-buffer": "^5.0.1" } }, "sha512-KDncfTmOZoOMTFG4mBlG0qUIOlc03fmzH+ru6RgYVZhPkyiy/92Owlt/8UEN+a4TXR1FQetfIpJE8ApdvdVxTg=="],
 
     "kareem": ["kareem@2.6.3", "", {}, "sha512-C3iHfuGUXK2u8/ipq9LfjFfXFxAZMQJJq7vLS45r3D9Y2xQ/m4S8zaR4zMLFWh9AsNPXmcFfUDhTEO8UIC/V6Q=="],
+
+    "kiitbites-application-backend": ["kiitbites-application-backend@file:", { "dependencies": { "bcryptjs": "^3.0.2", "bullmq": "^5.52.1", "cloudinary": "^2.6.0", "cors": "^2.8.5", "crypto": "^1.0.1", "dotenv": "^16.5.0", "express": "^5.1.0", "express-rate-limit": "^7.5.0", "express-validator": "^7.2.1", "google-auth-library": "^9.15.1", "ioredis": "^5.6.1", "jsonwebtoken": "^9.0.2", "mongoose": "^8.14.1", "nodemailer": "^7.0.0", "nodemon": "^3.1.10" } }],
 
     "lodash": ["lodash@4.17.21", "", {}, "sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg=="],
 
