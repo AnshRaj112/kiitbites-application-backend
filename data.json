@@ -1,0 +1,26 @@
+[
+    {
+      "name": "Chicken Roll",
+      "searchCount": 15
+    },
+    {
+      "name": "Chicken Rice",
+      "searchCount": 8
+    },
+    {
+      "name": "Sandwich",
+      "searchCount": 5
+    },
+    {
+      "name": "Veg Burger",
+      "searchCount": 3
+    },
+    {
+      "name": "Chicken Pizza",
+      "searchCount": 17
+    },
+    {
+      "name": "French Fries",
+      "searchCount": 8
+    }
+  ]
