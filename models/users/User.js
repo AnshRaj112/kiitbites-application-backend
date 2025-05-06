@@ -19,4 +19,4 @@ const UserSchema = new mongoose.Schema({
   pastOrders: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Order' }]
 }, { timestamps: true });
 
-module.exports = Cluster_User.model('User', userSchema);
+module.exports = Cluster_User.model('User', UserSchema);
