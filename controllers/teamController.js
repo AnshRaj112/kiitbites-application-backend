@@ -1,4 +1,4 @@
-const TeamMember = require("../models/Team");
+const TeamMember = require("../models/users/Team");
 
 // Fetch all team members
 const getTeamMembers = async (req, res) => {

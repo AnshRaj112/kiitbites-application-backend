@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { Cluster_User } = require('../../config/db');
 
 const ContactMessageSchema = new mongoose.Schema({
     name: {
@@ -22,4 +23,4 @@ const ContactMessageSchema = new mongoose.Schema({
     }
 });
 
-module.exports = mongoose.model("ContactMessage", ContactMessageSchema);
+module.exports = Cluster_User.model("ContactMessage", ContactMessageSchema);
