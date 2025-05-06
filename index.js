@@ -4,11 +4,9 @@ const cors = require("cors");
 const authRoutes = require("./routes/authRoutes");
 const foodRoutes = require("./routes/foodRoutes");
 const contactRoute = require("./routes/contactRoute");
-const connectDB = require("./config/db");
 const teamRoutes = require("./routes/teamRoutes");
 
 const app = express();
-connectDB();
 
 app.use(express.json());  // ✅ Parses incoming JSON data
 app.use(express.urlencoded({ extended: true }));  // ✅ Parses form data
