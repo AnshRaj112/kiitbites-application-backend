@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { Cluster_User } = require('../../config/db');
 
 const TeamMemberSchema = new mongoose.Schema({
   name: { type: String, required: true },
@@ -7,4 +8,4 @@ const TeamMemberSchema = new mongoose.Schema({
   linkedin: { type: String, required: true },
 });
 
-module.exports = mongoose.model("TeamMember", TeamMemberSchema);
+module.exports = Cluster_User.model("TeamMember", TeamMemberSchema);

@@ -17,7 +17,6 @@ app.use(express.urlencoded({ extended: true }));  // ✅ Parses form data
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
 const EXPOWEB_URL = process.env.EXPO_PUBLIC_BACKEND_URL_WEB || "http://localhost:8081";
 const EXPOAPP_URL = process.env.EXPO_PUBLIC_BACKEND_URL || "exp://10.5.6.113:8081";
-const MONGO_URL = process.env.MONGO_URL;
 const PORT = process.env.PORT || 5001;
 
 // ✅ Fix CORS issues: Use a single instance
@@ -33,10 +32,7 @@ app.use(
 
 
 // ✅ Ensure MONGO_URL exists
-if (!MONGO_URL) {
-  console.error("❌ MONGO_URL is missing in .env file");
-  process.exit(1);
-}
+
 
 // ✅ Routes
 app.use("/api/auth", authRoutes);

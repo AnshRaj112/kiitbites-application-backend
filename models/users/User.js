@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { Cluster_User } = require('../../config/db');
 
 const UserSchema = new mongoose.Schema({
   fullName: { type: String, required: true },
@@ -9,11 +10,13 @@ const UserSchema = new mongoose.Schema({
   isVerified: { type: Boolean, default: false },
   access: {
     type: String,
-    enum: ['user-standard', 'user-premium', 'admin', 'food court', 'refreshment', 'canteen', 'guest house', 'hospitality', 'main store'],
+    enum: ['user-standard', 'user-premium', 'admin'],
     default: 'user-standard'
   },
   loginAttempts: { type: Number, default: 0 },
   lastLoginAttempt: { type: Date, default: null },
+  cart: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Item' }],
+  pastOrders: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Order' }]
 }, { timestamps: true });
 
-module.exports = mongoose.model("User", UserSchema);
+module.exports = Cluster_User.model('User', userSchema);
