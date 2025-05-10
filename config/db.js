@@ -21,7 +21,7 @@ const Cluster_Inventory = mongoose.createConnection(process.env.MONGO_URI_INVENT
   useUnifiedTopology: true,
 });
 
-const Cluster_FoodCourt = mongoose.createConnection(process.env.MONGO_URI_FOODCOURT, {
+const Cluster_Accounts = mongoose.createConnection(process.env.MONGO_URI_ACCOUNT, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 });
@@ -36,6 +36,6 @@ module.exports = {
   Cluster_Order,
   Cluster_Item,
   Cluster_Inventory,
-  Cluster_FoodCourt,
+  Cluster_Accounts,
   Cluster_Cache_Analytics,
 };
