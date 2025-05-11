@@ -3,7 +3,7 @@ const { Cluster_Order } = require('../../config/db');
 
 const paymentSchema = new mongoose.Schema({
   orderId: { type: mongoose.Schema.Types.ObjectId, ref: 'Order' },
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'Account' },
   amount: Number,
   status: { type: String, enum: ['paid', 'unpaid', 'failed'] },
   paymentMethod: String,
