@@ -1,4 +1,3 @@
-// const User = require("../models/users/User");
 const Account = require("../models/account/Account");
 const Otp = require("../models/users/Otp");
 const bcrypt = require("bcryptjs");
