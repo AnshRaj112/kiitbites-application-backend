@@ -1,26 +1,17 @@
-const mongoose = require('mongoose');
-const { Cluster_Item } = require('../../config/db');
-const { Cluster_Accounts } = require('../../config/db'); // Ensure Account model access
+// item.js
+const mongoose = require("mongoose");
+const { Cluster_Item } = require("../../config/db"); // Using the clustered database
 
 const itemSchema = new mongoose.Schema({
-  name: String,
-  type: { type: String, enum: ['retail', 'produce'] },
-  quantity: Number,
-  unit: String,
-  price: Number,
-  foodCourtId: { 
-    type: mongoose.Schema.Types.ObjectId, 
-    ref: 'Account',
+  name: { type: String, required: true },
+  type: {
+    type: String,
+    enum: ["retail", "produce"],
     required: true,
-    validate: {
-      validator: async function(value) {
-        const account = await Cluster_Accounts.model("Account").findById(value).select('type');
-        const allowedTypes = ['admin', 'foodcourt', 'cafe', 'canteen', 'guesthouse', 'hospitality', 'main'];
-        return account && allowedTypes.includes(account.type);
-      },
-      message: 'foodCourtId must reference an Account with a valid service type.'
-    }
-  }
+  },
+  unit: { type: String, required: true },
+  price: { type: Number, required: true },
+  image: { type: String, required: true },
 });
 
-module.exports = Cluster_Item.model('Item', itemSchema);
+module.exports = Cluster_Item.model("Item", itemSchema); // Use Cluster_Item cluster

@@ -1,34 +1,43 @@
 const nodemailer = require("nodemailer");
+const ContactMessage = require("../models/users/ContactMessage"); // adjust the path as needed
 
 const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-    }
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
 });
 
-exports.sendContactEmail = (req, res) => {
-    const { name, email, message } = req.body;
+exports.sendContactEmail = async (req, res) => {
+  const { name, email, message } = req.body;
 
-    console.log("Contact data received:", { name, email, message });
+  console.log("Contact data received:", { name, email, message });
 
+  try {
+    // Save the contact message to MongoDB
+    const newMessage = new ContactMessage({ name, email, message });
+    await newMessage.save();
+
+    // Send the email notification
     const mailOptions = {
-        from: email,
-        to: process.env.EMAIL_USER,
-        subject: `New message from ${name}`,
-        text: `You have a new message from:
-        Name: ${name}
-        Email: ${email}
-        Message: ${message}`
+      from: email,
+      to: process.env.EMAIL_USER,
+      subject: `New message from ${name}`,
+      text: `You have a new message from:
+Name: ${name}
+Email: ${email}
+Message: ${message}`,
     };
 
-    transporter.sendMail(mailOptions, (error, info) => {
-        if (error) {
-            console.log("Email error:", error);
-            return res.status(500).json({ message: "Error sending email" });
-        }
-        console.log("Email sent:", info.response);
-        res.status(200).json({ message: "Email sent successfully" });
-    });
+    await transporter.sendMail(mailOptions);
+    console.log("Email sent successfully");
+
+    res
+      .status(200)
+      .json({ message: "Message received and email sent successfully" });
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).json({ message: "Failed to send message or email" });
+  }
 };

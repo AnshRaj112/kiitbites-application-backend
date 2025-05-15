@@ -5,39 +5,25 @@ const authRoutes = require("./routes/authRoutes");
 const foodRoutes = require("./routes/foodRoutes");
 const contactRoute = require("./routes/contactRoute");
 const teamRoutes = require("./routes/teamRoutes");
+const itemRoutes = require("./routes/itemRoutes");
+const inventoryRoutes = require("./routes/inventoryRoutes");
+const foodCourtRoutes = require("./routes/foodCourtRoutes");
+const cartRoutes = require("./routes/cartRoutes");
+const paymentRoutes = require("./routes/paymentRoute")
 
 const app = express();
 
-app.use(express.json());  // ✅ Parses incoming JSON data
-app.use(express.urlencoded({ extended: true }));  // ✅ Parses form data
+app.use(express.json()); // ✅ Parses incoming JSON data
+app.use(express.urlencoded({ extended: true })); // ✅ Parses form data
 
 // ✅ Load environment variables
-const EXPOWEB_URL = process.env.EXPO_PUBLIC_BACKEND_URL_WEB || "http://localhost:8081";
-const EXPOAPP_URL = process.env.EXPO_PUBLIC_BACKEND_URL || "exp://10.5.6.113:8081";
-const PORT = process.env.PORT || 5002;
+const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
+const PORT = process.env.PORT || 5001;
 
-// ✅ Fix CORS issues: Use a single instance with more flexible origin handling
+// ✅ Fix CORS issues: Use a single instance
 app.use(
   cors({
-    origin: function(origin, callback) {
-      const allowedOrigins = [
-        EXPOWEB_URL,
-        EXPOAPP_URL,
-        'http://localhost:8081',
-        'http://192.168.1.5:8081',
-        'exp://192.168.1.5:8081',
-        'exp://localhost:8081'
-      ];
-      
-      // Allow requests with no origin (like mobile apps, curl, etc)
-      if (!origin) return callback(null, true);
-      
-      if (allowedOrigins.indexOf(origin) === -1) {
-        const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-        return callback(new Error(msg), false);
-      }
-      return callback(null, true);
-    },
+    origin: [FRONTEND_URL],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "Accept"],
@@ -52,6 +38,11 @@ app.use("/api/auth", authRoutes);
 app.use("/api", foodRoutes);
 app.use("/contact", contactRoute);
 app.use("/team", teamRoutes);
+app.use("/items", itemRoutes);
+app.use("/inventory", inventoryRoutes);
+app.use("/foodcourts", foodCourtRoutes);
+app.use("/cart", cartRoutes);
+app.use("/payment", paymentRoutes);
 
 // ✅ Global error handling
 app.use((err, req, res, next) => {
@@ -71,5 +62,7 @@ if (process.env.NODE_ENV === "production") {
 
 // ✅ Start Server
 app.listen(PORT, () =>
-  console.log(`🚀 Server running on port ${PORT}, allowing frontend of web application from ${EXPOWEB_URL}, allowing frontend of application from ${EXPOAPP_URL}`)
+  console.log(
+    `🚀 Server running on port ${PORT}, allowing frontend from ${FRONTEND_URL}`
+  )
 );
