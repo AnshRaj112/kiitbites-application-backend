@@ -7,7 +7,11 @@ const paymentSchema = new mongoose.Schema({
   amount: Number,
   status: { type: String, enum: ['paid', 'unpaid', 'failed'] },
   paymentMethod: String,
-  timestamp: { type: Date, default: Date.now }
+  timestamp: { type: Date, default: Date.now },
+
+  // Razorpay-specific fields
+  razorpayOrderId: { type: String },
+  razorpayPaymentId: { type: String },
 });
 
 module.exports = Cluster_Order.model('Payment', paymentSchema);
