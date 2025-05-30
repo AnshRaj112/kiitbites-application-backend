@@ -1,157 +1,355 @@
 // controllers/cartController.js
-const { Cluster_Accounts, Cluster_Item } = require("../config/db");
+const User = require("../models/account/User");
+const Retail = require("../models/item/Retail");
+const Produce = require("../models/item/Produce");
+const cartUtils = require("../utils/cartUtils");
 
-// Get models from their respective clusters
-const Account = Cluster_Accounts.model("Account");
-const Inventory = Cluster_Item.model("Inventory");
-const Item = Cluster_Item.model("Item");
-
-// Helper to get foodCourtId for a given item
-async function getFoodCourtIdForItem(itemId) {
-  const inventory = await Inventory.findOne({ itemId });
-  return inventory ? inventory.foodCourtId.toString() : null;
-}
-
-// ➕ Add item to cart
 exports.addToCart = async (req, res) => {
-  const { userId, itemId } = req.body;
-
   try {
-    const user = await Account.findById(userId).populate("cart.itemId");
-    if (!user || !["user-standard", "user-premium"].includes(user.type)) {
-      return res.status(400).json({ error: "Invalid user" });
-    }
+    const userId = req.user.userId;
+    const { itemId, kind, quantity } = req.body;
 
-    const inventory = await Inventory.findOne({ itemId });
-    if (!inventory)
-      return res.status(404).json({ error: "Item not found in inventory" });
-
-    const foodCourtId = inventory.foodCourtId.toString();
-
-    if (user.cart.length > 0) {
-      const existingFoodCourtId = await getFoodCourtIdForItem(
-        user.cart[0].itemId._id
-      );
-      if (existingFoodCourtId !== foodCourtId) {
-        return res.status(409).json({
-          error:
-            "All items in cart must belong to the same foodcourt. Please clear cart to switch.",
-        });
-      }
-    }
-
-    const totalItems = user.cart.reduce(
-      (sum, entry) => sum + entry.quantity,
-      0
-    );
-    if (totalItems >= 5)
+    if (!itemId || !kind || !quantity || quantity <= 0) {
       return res
-        .status(403)
-        .json({ error: "Cart item limit reached (max 5 items)" });
-
-    const cartItem = user.cart.find((i) => i.itemId._id.toString() === itemId);
-    if (cartItem) {
-      if (cartItem.quantity >= inventory.quantity) {
-        return res
-          .status(403)
-          .json({ error: "Cannot add more than available quantity" });
-      }
-      cartItem.quantity += 1;
-    } else {
-      user.cart.push({ itemId, quantity: 1 });
+        .status(400)
+        .json({ message: "itemId, kind, and positive quantity are required." });
     }
 
-    await user.save();
-    res.json({ message: "Item added to cart", cart: user.cart });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Server error" });
-  }
-};
-
-// ➖ Remove one quantity
-exports.removeOne = async (req, res) => {
-  const { userId, itemId } = req.body;
-
-  try {
-    const user = await Account.findById(userId);
-    if (!user) return res.status(404).json({ error: "User not found" });
-
-    const index = user.cart.findIndex((i) => i.itemId.toString() === itemId);
-    if (index === -1)
-      return res.status(404).json({ error: "Item not in cart" });
-
-    if (user.cart[index].quantity > 1) {
-      user.cart[index].quantity -= 1;
-    } else {
-      user.cart.splice(index, 1);
+    // Check that kind is valid early
+    if (!["Retail", "Produce"].includes(kind)) {
+      return res.status(400).json({ message: "Invalid kind provided." });
     }
 
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: "User not found." });
+
+    // Find existing cart item
+    const existingItem = user.cart.find(
+      (entry) =>
+        entry.itemId.toString() === itemId.toString() && entry.kind === kind
+    );
+
+    // Calculate new total quantity for validation
+    const newQuantity = existingItem
+      ? Number(existingItem.quantity) + Number(quantity)
+      : Number(quantity);
+
+    console.log(
+      `Adding to cart: kind=${kind}, quantity=${quantity}, existing=${
+        existingItem ? existingItem.quantity : 0
+      }, newQuantity=${newQuantity}`
+    );
+
+    // Validate the new total quantity against max allowed
+    cartUtils.validateQuantity(kind, newQuantity);
+
+    const item = await cartUtils.getItemDetails(itemId, kind);
+    if (!item) return res.status(404).json({ message: "Item not found." });
+
+    const vendor = await cartUtils.findVendorWithItem(itemId, kind, item.uniId);
+    if (!vendor)
+      return res.status(404).json({ message: "Vendor for item not found." });
+
+    if (user.vendorId && user.vendorId.toString() !== vendor._id.toString()) {
+      return res
+        .status(400)
+        .json({ message: "Cart can contain items from only one vendor." });
+    }
+
+    const availableQuantity = await cartUtils.getVendorInventory(
+      vendor._id,
+      kind,
+      itemId
+    );
+
+    console.log(
+      `Vendor availableQuantity for itemId=${itemId}: ${availableQuantity}`
+    );
+
+    if (kind === "Produce" && availableQuantity === 0) {
+      return res
+        .status(400)
+        .json({ message: "Produce item is not available." });
+    }
+
+    if (kind === "Retail" && newQuantity > availableQuantity) {
+      return res
+        .status(400)
+        .json({ message: `Only ${availableQuantity} units available.` });
+    }
+
+    if (existingItem) {
+      existingItem.quantity = newQuantity;
+    } else {
+      user.cart.push({ itemId, kind, quantity });
+    }
+
+    if (!user.vendorId) user.vendorId = vendor._id;
+
     await user.save();
-    res.json({ message: "Item quantity reduced", cart: user.cart });
+
+    return res.status(200).json({ message: "Item added to cart successfully" });
   } catch (err) {
-    res.status(500).json({ error: "Server error" });
+    console.error("Add to cart error:", err.message);
+    return res
+      .status(500)
+      .json({ message: "Internal server error", error: err.message });
   }
 };
 
-// 🗑 Remove entire item
-exports.removeItem = async (req, res) => {
-  const { userId, itemId } = req.body;
-
-  try {
-    const user = await Account.findById(userId);
-    if (!user) return res.status(404).json({ error: "User not found" });
-
-    user.cart = user.cart.filter((i) => i.itemId.toString() !== itemId);
-    await user.save();
-
-    res.json({ message: "Item removed from cart", cart: user.cart });
-  } catch (err) {
-    res.status(500).json({ error: "Server error" });
-  }
-};
-
-// 🛒 Get cart
 exports.getCart = async (req, res) => {
-  const { userId } = req.params;
-
   try {
-    const user = await Account.findById(userId).populate("cart.itemId");
-    if (!user) return res.status(404).json({ error: "User not found" });
+    const userId = req.user.userId;
 
-    res.json({ cart: user.cart });
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: "User not found." });
+
+    const cartItems = user.cart;
+
+    const detailedCart = await Promise.all(
+      cartItems.map(async (entry) => {
+        const item = await cartUtils.getItemDetails(entry.itemId, entry.kind);
+        if (!item) return null;
+
+        return {
+          itemId: item._id,
+          name: item.name,
+          image: item.image,
+          unit: item.unit,
+          price: item.price,
+          quantity: entry.quantity,
+          kind: entry.kind,
+          totalPrice: item.price * entry.quantity,
+        };
+      })
+    );
+
+    return res.status(200).json({
+      cart: detailedCart.filter(Boolean), // remove any nulls
+      vendorId: user.vendorId,
+    });
   } catch (err) {
-    res.status(500).json({ error: "Server error" });
+    console.error("Get cart error:", err.message);
+    return res
+      .status(500)
+      .json({ message: "Internal server error", error: err.message });
   }
 };
 
-// 🍟 Get extras from same foodcourt
-exports.getExtras = async (req, res) => {
-  const { userId } = req.params;
-
+exports.increaseOne = async (req, res) => {
   try {
-    const user = await Account.findById(userId);
-    if (!user || user.cart.length === 0)
-      return res.status(200).json({ extras: [] });
+    const userId = req.user.userId;
+    const { itemId, kind } = req.body;
 
-    const foodCourtId = await getFoodCourtIdForItem(user.cart[0].itemId);
-    if (!foodCourtId)
-      return res.status(404).json({ error: "Foodcourt not found" });
+    if (!itemId || !kind) {
+      return res.status(400).json({ message: "itemId and kind are required." });
+    }
 
-    const cartItemIds = user.cart.map((entry) => entry.itemId.toString());
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: "User not found." });
 
-    const inventory = await Inventory.find({ foodCourtId }).populate("itemId");
+    const item = await cartUtils.getItemDetails(itemId, kind);
+    if (!item) return res.status(404).json({ message: "Item not found." });
 
-    const extras = inventory
-      .filter((entry) => !cartItemIds.includes(entry.itemId._id.toString()))
-      .map((entry) => ({
-        item: entry.itemId,
-        available: entry.quantity,
-      }));
+    const vendor = await cartUtils.findVendorWithItem(itemId, kind, item.uniId);
+    if (!vendor) return res.status(404).json({ message: "Vendor not found." });
 
-    res.json({ extras });
+    if (user.vendorId && user.vendorId.toString() !== vendor._id.toString()) {
+      return res
+        .status(400)
+        .json({ message: "Only one vendor allowed per cart." });
+    }
+
+    const availableQuantity = await cartUtils.getVendorInventory(
+      vendor._id,
+      kind,
+      itemId
+    );
+
+    if (kind === "Produce" && availableQuantity === 0) {
+      return res.status(400).json({ message: "Produce item unavailable." });
+    }
+
+    const existingItem = user.cart.find(
+      (entry) =>
+        entry.itemId.toString() === itemId.toString() && entry.kind === kind
+    );
+
+    if (!existingItem) {
+      cartUtils.validateQuantity(kind, 1);
+      user.cart.push({ itemId, kind, quantity: 1 });
+    } else {
+      const newQuantity = existingItem.quantity + 1;
+      cartUtils.validateQuantity(kind, newQuantity);
+
+      if (kind === "Retail" && newQuantity > availableQuantity) {
+        return res
+          .status(400)
+          .json({ message: `Only ${availableQuantity} units available.` });
+      }
+
+      existingItem.quantity = newQuantity;
+    }
+
+    if (!user.vendorId) user.vendorId = vendor._id;
+
+    await user.save();
+    return res.status(200).json({ message: "Quantity increased" });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Server error" });
+    console.error("Increase one error:", err.message);
+    return res
+      .status(500)
+      .json({ message: "Internal server error", error: err.message });
+  }
+};
+
+exports.decreaseOne = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { itemId, kind } = req.body;
+
+    if (!itemId || !kind) {
+      return res.status(400).json({ message: "itemId and kind are required." });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: "User not found." });
+
+    const index = user.cart.findIndex(
+      (entry) =>
+        entry.itemId.toString() === itemId.toString() && entry.kind === kind
+    );
+
+    if (index === -1) {
+      return res.status(404).json({ message: "Item not in cart." });
+    }
+
+    const currentQuantity = user.cart[index].quantity;
+
+    if (currentQuantity === 1) {
+      user.cart.splice(index, 1);
+    } else {
+      user.cart[index].quantity = currentQuantity - 1;
+    }
+
+    if (user.cart.length === 0) {
+      user.vendorId = undefined;
+    }
+
+    await user.save();
+    return res.status(200).json({ message: "Quantity decreased" });
+  } catch (err) {
+    console.error("Decrease one error:", err.message);
+    return res
+      .status(500)
+      .json({ message: "Internal server error", error: err.message });
+  }
+};
+
+exports.removeItem = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { itemId, kind } = req.body;
+
+    if (!itemId || !kind) {
+      return res.status(400).json({ message: "itemId and kind are required." });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: "User not found." });
+
+    const originalLength = user.cart.length;
+
+    user.cart = user.cart.filter(
+      (entry) =>
+        !(entry.itemId.toString() === itemId.toString() && entry.kind === kind)
+    );
+
+    if (user.cart.length === 0 && originalLength > 0) {
+      user.vendorId = undefined;
+    }
+
+    await user.save();
+
+    return res.status(200).json({
+      message: "Item removed from cart",
+    });
+  } catch (err) {
+    console.error("Remove item error:", err.message);
+    return res
+      .status(500)
+      .json({ message: "Internal server error", error: err.message });
+  }
+};
+
+exports.getExtras = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: "User not found." });
+
+    if (!user.cart.length || !user.vendorId) {
+      return res
+        .status(200)
+        .json({ message: "Cart is empty. No extras available.", extras: [] });
+    }
+
+    const vendorId = user.vendorId;
+    const vendor = await cartUtils.getVendorById(vendorId); // no populate
+
+    if (!vendor) return res.status(404).json({ message: "Vendor not found." });
+
+    const cartItemIds = user.cart.map((item) => item.itemId.toString());
+
+    // Batch fetch Retail item IDs not in cart
+    const retailItemIds = vendor.retailInventory
+      .map((entry) => entry.itemId)
+      .filter((id) => id && !cartItemIds.includes(id.toString()));
+
+    // Batch fetch Produce item IDs not in cart
+    const produceItemIds = vendor.produceInventory
+      .map((entry) => entry.itemId)
+      .filter((id) => id && !cartItemIds.includes(id.toString()));
+
+    // Fetch items in parallel
+    const [retailItems, produceItems] = await Promise.all([
+      Retail.find({ _id: { $in: retailItemIds } }),
+      Produce.find({ _id: { $in: produceItemIds } }),
+    ]);
+
+    const extras = [];
+
+    retailItems.forEach((item) => {
+      extras.push({
+        itemId: item._id,
+        name: item.name,
+        price: item.price,
+        image: item.image,
+        kind: "Retail",
+      });
+    });
+
+    produceItems.forEach((item) => {
+      extras.push({
+        itemId: item._id,
+        name: item.name,
+        price: item.price,
+        image: item.image,
+        kind: "Produce",
+      });
+    });
+
+    res.status(200).json({
+      message: extras.length
+        ? "Extras from the same vendor."
+        : "No extra items available.",
+      extras,
+    });
+  } catch (err) {
+    console.error("Get extras error:", err.message);
+    return res
+      .status(500)
+      .json({ message: "Internal server error", error: err.message });
   }
 };

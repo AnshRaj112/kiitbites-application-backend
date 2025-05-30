@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 const { Cluster_Accounts } = require("../config/db");
 //const { Cluster_Item } = require("../config/db");
-const Account = Cluster_Accounts.model("Account");
+const Account = Cluster_Accounts.model("User");
 //const Item = Cluster_Item.model("Item");
 
 // Create a food provider account (foodcourt, cafe, canteen, guesthouse)

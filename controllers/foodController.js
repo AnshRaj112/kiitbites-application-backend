@@ -1,37 +1,51 @@
-const fs = require("fs");
-const path = require("path");
+// // const Item = require("../models/item/Item");
 
-// Load food data from JSON file
-const foodDataPath = path.join(__dirname, "../data.json");
-let foods = JSON.parse(fs.readFileSync(foodDataPath, "utf8"));
 
-// Function to search food based on query
-exports.searchFoods = (req, res) => {
-  const { query } = req.query;
-  if (!query) {
-    return res.json([]); // Return empty if no search query
-  }
+// // Function to search food based on query
+// exports.searchFoods = async (req, res) => {
+//   const { query } = req.query;
+//   if (!query) {
+//     return res.json([]);
+//   }
 
-  const lowerQuery = query.toLowerCase();
+//   try {
+//     const lowerQuery = query.toLowerCase();
 
-  // Filter foods that start with the search query
-  let filteredFoods = foods.filter((food) =>
-    food.name.toLowerCase().startsWith(lowerQuery)
-  );
+//     const items = await Item.find({
+//       name: { $regex: lowerQuery, $options: "i" }, // case-insensitive search
+//     }).sort({ searchCount: -1 });
 
-  // Sort results by popularity (searchCount)
-  filteredFoods.sort((a, b) => b.searchCount - a.searchCount);
+//     res.json(items);
+//   } catch (err) {
+//     res.status(500).json({ message: "Error searching foods", error: err.message });
+//   }
+// };
 
-  res.json(filteredFoods);
-};
 
-// Function to increase search count (for popular search feature)
-exports.incrementSearchCount = (foodName) => {
-  let foodIndex = foods.findIndex((food) => food.name === foodName);
-  if (foodIndex !== -1) {
-    foods[foodIndex].searchCount += 1; // Increase count
-  }
+// exports.getPopularFoods = async (req, res) => {
+//   try {
+//     const popularItems = await Item.find({}, "name price image searchCount")
+//       .sort({ searchCount: -1 })
+//       .limit(12);
 
-  // Save updated search counts to data.json
-  fs.writeFileSync(foodDataPath, JSON.stringify(foods, null, 2));
-};
+//     res.status(200).json(popularItems);
+//   } catch (err) {
+//     res.status(500).json({ message: "Error fetching popular foods", error: err.message });
+//   }
+// };
+
+
+
+
+// // Function to increase search count (for popular search feature)
+// exports.incrementSearchCount = async (foodName) => {
+//   try {
+//     const item = await Item.findOne({ name: foodName });
+//     if (item) {
+//       item.searchCount = (item.searchCount || 0) + 1;
+//       await item.save();
+//     }
+//   } catch (err) {
+//     console.error("Error incrementing search count:", err);
+//   }
+// };

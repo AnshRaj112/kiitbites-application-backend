@@ -1,5 +1,5 @@
 const express = require("express");
-const { signup, verifyOtp, login, forgotPassword, resetPassword, googleAuth, googleSignup, logout, refreshToken, verifyToken, checkSession, getUser } = require("../controllers/authController");
+const { signup, verifyOtp, login, forgotPassword, resetPassword, googleAuth, googleSignup, logout, refreshToken, verifyToken, checkSession, getUser } = require("../../controllers/auth/uniAuthController");
 const router = express.Router();
 
 // Auth routes

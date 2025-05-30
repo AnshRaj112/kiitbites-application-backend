@@ -1,14 +1,69 @@
-const mongoose = require('mongoose');
-const { Cluster_Inventory } = require('../../config/db');
+const mongoose = require("mongoose");
+const { Cluster_Inventory } = require("../../config/db");
 
-const inventoryReportSchema = new mongoose.Schema({
-  foodCourtId: { type: mongoose.Schema.Types.ObjectId, ref: 'FoodCourt' },
-  date: { type: Date, default: Date.now },
-  entries: [{
-    item: { type: mongoose.Schema.Types.ObjectId, ref: 'Item' },
-    openingQty: Number,
-    closingQty: Number
-  }]
-});
+const inventoryReportSchema = new mongoose.Schema(
+  {
+    vendorId: { type: mongoose.Schema.Types.ObjectId, ref: "Vendor" },
+    date: { type: Date, default: Date.now },
 
-module.exports = Cluster_Inventory.model('InventoryReport', inventoryReportSchema);
+    retailEntries: [
+      {
+        item: { type: mongoose.Schema.Types.ObjectId, ref: "Retail" },
+        openingQty: Number,
+        closingQty: Number,
+        soldQty: Number,
+        _id: false,
+      },
+    ],
+
+    produceEntries: [
+      {
+        item: { type: mongoose.Schema.Types.ObjectId, ref: "Produce" },
+        soldQty: Number,
+        _id: false,
+      },
+    ],
+
+    rawEntries: [
+      {
+        item: { type: mongoose.Schema.Types.ObjectId, ref: "Raw" },
+        openingQty: Number,
+        closingQty: Number,
+        _id: false,
+      },
+    ],
+
+    itemReceived: [
+      {
+        itemId: {
+          type: mongoose.Schema.Types.ObjectId,
+          refPath: "itemReceived.kind",
+        },
+        kind: { type: String, enum: ["Retail", "Produce", "Raw"] },
+        quantity: Number,
+        _id: false,
+        date: { type: Date, default: Date.now },
+      },
+    ],
+
+    itemSend: [
+      {
+        itemId: {
+          type: mongoose.Schema.Types.ObjectId,
+          refPath: "itemProduced.kind",
+        },
+        kind: { type: String, enum: ["Retail", "Produce", "Raw"] },
+        quantity: Number,
+        _id: false,
+        date: { type: Date, default: Date.now },
+      },
+    ],
+  },
+  { timestamps: true } // correct place for this
+);
+const InventoryReport = Cluster_Inventory.model(
+  "InventoryReport",
+  inventoryReportSchema
+);
+
+module.exports = InventoryReport;

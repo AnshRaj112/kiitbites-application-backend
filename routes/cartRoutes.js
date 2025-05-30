@@ -1,12 +1,16 @@
-// routes/cartRoutes.js
 const express = require("express");
 const router = express.Router();
 const cartController = require("../controllers/cartController");
+const { authMiddleware } = require("../middleware/authMiddleware");
+// for JWT verification
 
-router.post("/add", cartController.addToCart);
-router.post("/remove-one", cartController.removeOne);
-router.post("/remove-item", cartController.removeItem);
-router.get("/:userId", cartController.getCart);
-router.get("/extras/:userId", cartController.getExtras);
+router.post("/add", authMiddleware, cartController.addToCart);
+router.get("/", authMiddleware, cartController.getCart);
+router.post("/add-one", authMiddleware, cartController.increaseOne);
+router.post("/remove-one", authMiddleware, cartController.decreaseOne);
+router.post("/remove-item", authMiddleware, cartController.removeItem);
+router.get("/extras", authMiddleware, cartController.getExtras);
+
+// router.post("/pay", authMiddleware, cartController.placeOrder);
 
 module.exports = router;

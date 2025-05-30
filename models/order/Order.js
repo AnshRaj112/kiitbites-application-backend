@@ -1,31 +1,47 @@
-const mongoose = require('mongoose');
-const { Cluster_Order } = require('../../config/db');
-const { Cluster_Accounts } = require('../../config/db');
+const mongoose = require("mongoose");
+const { Cluster_Order } = require("../../config/db");
+const { Cluster_Accounts } = require("../../config/db");
 
 const orderSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-  items: [{
-    item: { type: mongoose.Schema.Types.ObjectId, ref: 'Item' },
-    quantity: Number,
-    isProduce: Boolean
-  }],
-  total: Number,
-  status: { type: String, enum: ['ordered', 'completed'], default: 'ordered' },
-  paymentStatus: { type: String, enum: ['paid', 'unpaid', 'pending'], default: 'unpaid' },
-  foodCourtId: { 
-    type: mongoose.Schema.Types.ObjectId, 
-    ref: 'Account',
-    required: true,
-    validate: {
-      validator: async function(value) {
-        const account = await Cluster_Accounts.model("Account").findById(value).select('type');
-        const allowedTypes = ['admin', 'foodcourt', 'cafe', 'canteen', 'guesthouse', 'hospitality', 'main'];
-        return account && allowedTypes.includes(account.type);
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  items: [
+    {
+      itemId: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: true,
+        refPath: "items.kind",
       },
-      message: 'foodCourtId must reference an Account with a valid service type.'
-    }
+      kind: { type: String, required: true, enum: ["Retail", "Produce"] },
+      quantity: { type: Number, default: 1 },
+      _id: false,
+    },
+  ],
+  total: Number,
+  address: { type: String, required: true },
+  status: {
+    type: String,
+    enum: [
+      "ordered",
+      "inProgress",
+      "completed",
+      "onTheWay",
+      "delivered",
+      "failed",
+    ],
+    default: "ordered",
   },
-  createdAt: { type: Date, default: Date.now }
+  paymentId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Payment",
+  },
+  paymentStatus: {
+    type: String,
+    enum: ["paid", "failed", "pending"],
+    default: "pending",
+  },
+
+  vendorId: { type: mongoose.Schema.Types.ObjectId, ref: "Vendor" },
+  createdAt: { type: Date, default: Date.now },
 });
 
-module.exports = Cluster_Order.model('Order', orderSchema);
+module.exports = Cluster_Order.model("Order", orderSchema);

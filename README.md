@@ -1,7 +1,7 @@
-# KIITBites Application  Backend
+# BiteBay Application  Backend
 
 ## Introduction
-The **KIITBites Application Backend** is the core of the food ordering and inventory management system for KIIT University. It handles user authentication, order processing, inventory tracking, payment processing, and real-time updates. This backend is built using **Node.js with Express.js** and uses **MongoDB** and **Mongoose** as the database.
+The **BiteBay Application Backend** is the core of the food ordering and inventory management system for KIIT University. It handles user authentication, order processing, inventory tracking, payment processing, and real-time updates. This backend is built using **Node.js with Express.js** and uses **MongoDB** and **Mongoose** as the database.
 
 ## Tech Stack
 - **Backend Framework:** Node.js with Express.js
@@ -61,8 +61,8 @@ PAYMENT_GATEWAY_KEY=your_payment_gateway_key
 1. **Fork the repository** on GitHub.
 2. **Clone the repository**:
    ```bash
-   git clone https://github.com/your-repo/KIITBites-Backend.git
-   cd KIITBites-Backend
+   git clone https://github.com/your-repo/BiteBay-Backend.git
+   cd BiteBay-Backend
    ```
 3. **Install dependencies**:
    ```bash
@@ -111,4 +111,4 @@ PAYMENT_GATEWAY_KEY=your_payment_gateway_key
 This project is licensed under the MIT License.
 
 ## Contact
-For queries or contributions, contact the **KIITBites Backend Team** at [kiitbites@gmail.com](mailto:kiitbites@gmail.com).
+For queries or contributions, contact the **BiteBay Backend Team** at [kiitbites@gmail.com](mailto:kiitbites@gmail.com).
