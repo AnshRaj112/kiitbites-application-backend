@@ -1,7 +1,7 @@
 const Razorpay = require("razorpay");
 const crypto = require("crypto");
 const Payment = require("../models/order/Payment"); // adjust path as needed
-const Account = require("../models/account/Account");
+const Account = require("../models/account/User");
 const Item = require("../models/item/Item");
 
 const razorpay = new Razorpay({
@@ -88,12 +88,10 @@ exports.verifyPayment = async (req, res) => {
       $set: { cart: [] },
     });
 
-    res
-      .status(200)
-      .json({
-        message: "Payment verified successfully",
-        paymentId: payment._id,
-      });
+    res.status(200).json({
+      message: "Payment verified successfully",
+      paymentId: payment._id,
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Payment verification failed" });

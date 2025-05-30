@@ -1,10 +1,10 @@
-// const User = require("../models/users/User");
-const Account = require("../models/account/Account");
-const Otp = require("../models/users/Otp");
+const Account = require("../../models/account/Vendor");
+const Uni = require("../../models/account/Uni");
+const Otp = require("../../models/users/Otp");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
-const sendOtpEmail = require("../utils/sendOtp");
+const sendOtpEmail = require("../../utils/sendOtp");
 
 // Utility: Generate OTP
 const generateOtp = () => crypto.randomInt(100000, 999999).toString();
@@ -25,12 +25,12 @@ const setTokenCookie = (res, token) => {
   });
 };
 
-// **1. User Signup**exports.signup = async (req, res) => {
+// **1. User Signup**
 exports.signup = async (req, res) => {
   try {
     console.log("🔵 Signup Request Received:", req.body);
 
-    const { fullName, email, phone, password, gender, type, location } =
+    const { fullName, email, phone, password, location, uniID } =
       req.body;
 
     const existingUser = await Account.findOne({ $or: [{ email }, { phone }] });
@@ -47,31 +47,28 @@ exports.signup = async (req, res) => {
       email,
       phone,
       password: hashedPassword,
-      type,
+      location, 
+      uniID,
       isVerified: false,
     };
-
-    if (["user-standard", "user-premium", "admin"].includes(type)) {
-      accountData.fullName = fullName;
-      accountData.gender = gender;
-    }
-
-    if (
-      [
-        "foodcourt",
-        "cafe",
-        "canteen",
-        "guesthouse",
-        "hospitality",
-        "main",
-      ].includes(type)
-    ) {
-      accountData.location = location;
-    }
 
     const newAccount = new Account(accountData);
     await newAccount.save();
     console.log("✅ Account created:", email);
+
+    // Update Uni's vendors array
+    await Uni.findByIdAndUpdate(
+      uniID,
+      {
+        $push: {
+          vendors: {
+            vendorId: newAccount._id,
+            isAvailable: "Y"
+          }
+        }
+      }
+    );
+    console.log("✅ Vendor added to Uni's vendors array");
 
     const token = jwt.sign(
       { id: newAccount._id, role: newAccount.type },
@@ -86,9 +83,6 @@ exports.signup = async (req, res) => {
 
     await sendOtpEmail(email, otp);
     console.log("📧 OTP sent to email:", email);
-
-    // Optional: Set cookie
-    // setTokenCookie(res, token);
 
     return res.status(201).json({
       message: "Account created successfully. OTP sent for verification.",
@@ -400,7 +394,9 @@ exports.getUser = async (req, res) => {
     console.log("✅ Token verified, userId:", decoded.userId);
 
     // Get user data
-    const user = await Account.findById(decoded.userId).select("-password -__v");
+    const user = await Account.findById(decoded.userId).select(
+      "-password -__v"
+    );
 
     if (!user) {
       console.log("⚠️ User not found");
