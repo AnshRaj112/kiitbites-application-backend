@@ -17,4 +17,23 @@ router.put("/:category/:id", itemController.updateItem);
 // Delete an item by id in a category
 router.delete("/:category/:id", itemController.deleteItem);
 
+// Search items with enhanced enum matching
+router.get("/search/items", itemController.searchItems);
+
+// Search vendors by name within a uniID
+router.get("/search/vendors", itemController.searchVendorsByName);
+
+//Fetch all vendors that currently hold a given retail/produce item:
+// Only returns vendorName + either quantity (retail) or isAvailable (produce).
+router.get(
+  "/vendors/by-item/:itemType/:itemId",
+  itemController.getVendorsByItem
+);
+
+//Fetch all in‐stock retail items and all available produce items for one vendor:
+router.get("/getvendors/:vendorId", itemController.getItemsByVendor);
+
+// Get vendors for a specific item
+router.get("/vendors/:itemId", itemController.getVendorsForItem);
+
 module.exports = router;

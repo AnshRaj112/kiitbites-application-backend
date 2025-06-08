@@ -4,7 +4,7 @@ const cors = require("cors");
 const userAuthRoutes = require("./routes/auth/userAuthRoutes");
 const uniAuthRoutes = require("./routes/auth/uniAuthRoutes");
 const vendorAuthRoutes = require("./routes/auth/vendorAuthRoutes");
-// const foodRoutes = require("./routes/foodRoutes");
+const foodRoutes = require("./routes/foodRoutes");
 const contactRoute = require("./routes/contactRoute");
 const teamRoutes = require("./routes/teamRoutes");
 const itemRoutes = require("./routes/itemRoutes");
@@ -12,8 +12,10 @@ const foodCourtRoutes = require("./routes/foodCourtRoutes");
 const cartRoutes = require("./routes/cartRoutes");
 const inventoryRoutes = require("./routes/inventoryRoutes");
 const favouriteRoutes = require("./routes/favouriteRoutes");
-// const paymentRoutes = require("./routes/paymentRoute");
-
+const orderRoutes = require("./routes/orderRoutes");
+const vendorRoutes = require("./routes/vendorRoutes");
+const paymentRoutes = require("./routes/paymentRoute");
+const inventoryReportRoutes = require("./routes/inventoryReportRoutes");
 const app = express();
 
 app.use(express.json()); // ✅ Parses incoming JSON data
@@ -40,7 +42,7 @@ app.use(
 app.use("/api/user/auth", userAuthRoutes);
 app.use("/api/uni/auth", uniAuthRoutes);
 app.use("/api/vendor/auth", vendorAuthRoutes);
-// app.use("/api", foodRoutes);
+app.use("/api/foods", foodRoutes);
 app.use("/contact", contactRoute);
 app.use("/team", teamRoutes);
 app.use("/items", itemRoutes);
@@ -48,8 +50,10 @@ app.use("/foodcourts", foodCourtRoutes);
 app.use("/cart", cartRoutes);
 app.use("/inventory", inventoryRoutes);
 app.use("/fav", favouriteRoutes);
-// app.use("/payment", paymentRoutes);
-
+app.use("/order", orderRoutes);
+app.use("/payment", paymentRoutes);
+app.use("/api/vendor", vendorRoutes);
+app.use("/inventoryreport", inventoryReportRoutes);
 // ✅ Global error handling
 app.use((err, req, res, next) => {
   console.error("🔥 Server Error:", err);
